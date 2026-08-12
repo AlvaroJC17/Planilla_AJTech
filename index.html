@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orden de Recepción - AJ.tech</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 15px; padding-bottom: 50px; background-color: #f4f6f9; color: #333; }
+    h2 { text-align: center; color: #0b2545; }
+    .section { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .section h3 { margin-top: 0; color: #134074; border-bottom: 2px solid #134074; padding-bottom: 5px; font-size: 16px; }
+    label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+    input[type="text"], input[type="date"], input[type="number"], textarea, select {
+      width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;
+    }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+    .checkbox-group label { font-weight: normal; margin-top: 0; }
+    button {
+      width: 100%; padding: 12px; background-color: #0b2545; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    }
+    button:active { background-color: #134074; }
+  </style>
+  <!-- Librerías para generar el PDF desde la plantilla de imagen -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <h2>Generador de Orden de Servicio</h2>
+
+  <form id="orderForm">
+    <!-- Encabezado -->
+    <div class="section">
+      <h3>Datos de la Orden</h3>
+      <label>N.° de Orden:</label>
+      <input type="text" id="n_orden" placeholder="Ej: 0077">
+      <label>Fecha Recepción:</label>
+      <input type="text" id="fecha_recepcion" placeholder="DD/MM/AAAA">
+      <label>Fecha Estimada de Entrega:</label>
+      <input type="text" id="fecha_entrega" placeholder="DD/MM/AAAA">
+    </div>
+
+    <!-- 1. Datos del Cliente -->
+    <div class="section">
+      <h3>1. Datos del Cliente</h3>
+      <label>Nombre y Apellido:</label>
+      <input type="text" id="cliente_nombre">
+      <label>DNI:</label>
+      <input type="text" id="cliente_dni">
+      <label>Teléfono:</label>
+      <input type="text" id="cliente_telefono">
+      <label>Dirección:</label>
+      <input type="text" id="cliente_direccion">
+      <label>Correo Electrónico:</label>
+      <input type="text" id="cliente_correo">
+    </div>
+
+    <!-- 2. Datos del Equipo -->
+    <div class="section">
+      <h3>2. Datos del Equipo / Artículo</h3>
+      <label>Tipo de Equipo:</label>
+      <input type="text" id="equipo_tipo" placeholder="Ej: PC Escritorio">
+      <label>Marca:</label>
+      <input type="text" id="equipo_marca">
+      <label>Modelo:</label>
+      <input type="text" id="equipo_modelo">
+      <label>N.° Serie / IMEI:</label>
+      <input type="text" id="equipo_serie">
+      <label>Estado Físico:</label>
+      <input type="text" id="equipo_estado">
+      <label>Observaciones / Detalles Visibles:</label>
+      <textarea id="equipo_obs" rows="2"></textarea>
+      <label>Contraseña / PIN:</label>
+      <input type="text" id="equipo_pin">
+    </div>
+
+    <!-- 3. Motivo del Ingreso -->
+    <div class="section">
+      <h3>3. Motivo del Ingreso</h3>
+      <label>Descripción de la Falla / Solicitud:</label>
+      <textarea id="motivo_falla" rows="3"></textarea>
+    </div>
+
+    <!-- 5. Presupuesto -->
+    <div class="section">
+      <h3>5. Presupuesto y Autorización</h3>
+      <label>Diagnóstico ($):</label>
+      <input type="text" id="presupuesto_diag" value="30.000">
+      <label>Presupuesto Reparación ($):</label>
+      <input type="text" id="presupuesto_rep">
+      <label>Observaciones Adicionales:</label>
+      <textarea id="presupuesto_obs" rows="2"></textarea>
+    </div>
+
+    <!-- 7. Recepción y Entrega -->
+    <div class="section">
+      <h3>7. Recepción (AJ Tech)</h3>
+      <label>Recibido por (Nombre):</label>
+      <input type="text" id="recibido_nombre">
+      <label>Fecha de Recepción:</label>
+      <input type="text" id="recibido_fecha">
+    </div>
+
+    <button type="button" onclick="generatePDF()">Generar PDF sobre Planilla</button>
+  </form>
+
+  <script>
+    // URL de la imagen base (se recomienda alojar la plantilla original en un servidor o codificarla en base64)
+    const bgImageUrl = 'Planilla Pc.jpeg'; 
+
+    async function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      // Cargar la imagen base
+      const img = new Image();
+      img.src = bgImageUrl;
+      
+      img.onload = function() {
+        // Dibujar la plantilla en todo el A4 (210mm x 297mm)
+        doc.addImage(img, 'JPEG', 0, 0, 210, 297);
+
+        // Configuración de texto
+        doc.setFont("Helvetica");
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+
+        // --- MAPEO DE COORDENADAS (X, Y en mm) ---
+        // Ajusta estos valores según la alineación exacta en tu plantilla
+        
+        // Encabezado
+        doc.text(document.getElementById('n_orden').value, 172, 13);
+        doc.text(document.getElementById('fecha_recepcion').value, 102, 24);
+        doc.text(document.getElementById('fecha_entrega').value, 175, 24);
+
+        // 1. Datos del Cliente
+        doc.text(document.getElementById('cliente_nombre').value, 38, 38);
+        doc.text(document.getElementById('cliente_dni').value, 20, 42);
+        doc.text(document.getElementById('cliente_telefono').value, 92, 42);
+        doc.text(document.getElementById('cliente_direccion').value, 28, 47);
+        doc.text(document.getElementById('cliente_correo').value, 38, 52);
+
+        // 2. Datos del Equipo
+        doc.text(document.getElementById('equipo_tipo').value, 32, 63);
+        doc.text(document.getElementById('equipo_marca').value, 22, 68);
+        doc.text(document.getElementById('equipo_modelo').value, 82, 68);
+        doc.text(document.getElementById('equipo_serie').value, 58, 73);
+        doc.text(document.getElementById('equipo_estado').value, 15, 87);
+        doc.text(document.getElementById('equipo_obs').value, 15, 96);
+        doc.text(document.getElementById('equipo_pin').value, 80, 103);
+
+        // 3. Motivo
+        doc.text(document.getElementById('motivo_falla').value, 15, 130);
+
+        // 5. Presupuesto
+        doc.text(document.getElementById('presupuesto_diag').value, 35, 147);
+        doc.text(document.getElementById('presupuesto_rep').value, 60, 147);
+        doc.text(document.getElementById('presupuesto_obs').value, 15, 156);
+
+        // 7. Recepción
+        doc.text(document.getElementById('recibido_nombre').value, 110, 198);
+        doc.text(document.getElementById('recibido_fecha').value, 105, 208);
+
+        // Guardar el archivo PDF
+        const numOrden = document.getElementById('n_orden').value || 'orden';
+        doc.save(`Orden_${numOrden}.pdf`);
+      };
+
+      img.onerror = function() {
+        alert("No se pudo cargar la imagen de la plantilla ('Planilla Pc.jpeg'). Asegúrate de que esté en la misma carpeta.");
+      };
+    }
+  </script>
+</body>
+</html>
